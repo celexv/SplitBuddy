@@ -1199,3 +1199,23 @@ body {
 .text-secondary { color: var(--text-secondary); }
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
+
+/* ===== RESPONSIVE MOBILE FIXES ===== */
+.user-name-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px; /* Allow much more space on desktop */
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 0 1rem;
+  }
+  .user-name-text {
+    max-width: 80px; /* Only strictly truncate on very small screens */
+  }
+  .navbar-logo {
+    font-size: 1.1rem;
+  }
+}

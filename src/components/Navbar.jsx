@@ -14,7 +14,8 @@ export default function Navbar() {
   }
 
   const displayName = currentUser?.displayName || (currentUser?.isAnonymous ? 'Guest' : currentUser?.email?.split('@')[0] || 'User');
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const firstName = displayName.trim().split(' ')[0];
+  const initials = firstName.slice(0, 2).toUpperCase();
 
   return (
     <nav className="navbar">
@@ -33,7 +34,7 @@ export default function Navbar() {
                 initials
               )}
             </div>
-            {displayName}
+            <span className="user-name-text" title={displayName}>{firstName}</span>
             {currentUser?.isAnonymous && (
               <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>(Guest)</span>
             )}
