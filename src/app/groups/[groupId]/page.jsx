@@ -7,9 +7,11 @@ import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ConfirmModal from '@/components/ConfirmModal';
+import RecordSettlementModal from '@/components/RecordSettlementModal';
 import { getGroup } from '@/lib/groups';
 import { getGroupExpenses, addExpense, updateExpense, deleteExpense } from '@/lib/expenses';
 import { calculateBalances, getSettlements, formatINR } from '@/lib/balances';
+import { generateGroupReport } from '@/lib/pdfReport';
 
 export default function GroupPage({ params }) {
   const { groupId } = use(params);
@@ -25,6 +27,7 @@ export default function GroupPage({ params }) {
   const [editExpense, setEditExpense] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteExpense, setConfirmDeleteExpense] = useState(null);
+  const [recordingSettlement, setRecordingSettlement] = useState(null);
 
   useEffect(() => {
     if (!currentUser) { router.push('/login'); return; }
@@ -81,8 +84,10 @@ export default function GroupPage({ params }) {
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  function getExpenseIcon(desc) {
-    const d = desc.toLowerCase();
+  function getExpenseIcon(exp) {
+    if (exp.isSettlement) return '💸';
+    const d = (exp.description || '').toLowerCase();
+    if (d.includes('payment') || d.includes('settle')) return '💸';
     if (d.includes('food') || d.includes('dinner') || d.includes('lunch') || d.includes('restaurant') || d.includes('pizza')) return '🍽️';
     if (d.includes('hotel') || d.includes('stay') || d.includes('hostel') || d.includes('room')) return '🏨';
     if (d.includes('travel') || d.includes('taxi') || d.includes('uber') || d.includes('flight') || d.includes('train')) return '🚗';
@@ -110,13 +115,21 @@ export default function GroupPage({ params }) {
               </Link>
               <div className="group-title-row">
                 <h1 className="group-title">{group.name}</h1>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setShowAdd(true)}
-                  id="btn-add-expense"
-                >
-                  + Add Expense
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => generateGroupReport(group, expenses, balances, settlements)}
+                  >
+                    📄 Report
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setShowAdd(true)}
+                    id="btn-add-expense"
+                  >
+                    + Add Expense
+                  </button>
+                </div>
               </div>
               <p className="text-muted text-sm mt-2">
                 {group.members?.length} members ·{' '}
@@ -143,28 +156,34 @@ export default function GroupPage({ params }) {
                   <div className="expenses-list">
                     {expenses.map((exp) => (
                       <div key={exp.id} className="expense-item" id={`expense-${exp.id}`}>
-                        <div className="expense-icon">{getExpenseIcon(exp.description)}</div>
+                        <div className={`expense-icon ${exp.isSettlement ? 'settlement' : ''}`}>{getExpenseIcon(exp)}</div>
                         <div className="expense-details">
-                          <div className="expense-desc">{exp.description}</div>
+                          <div className="expense-desc">
+                            {exp.isSettlement ? `Payment: ${exp.payers?.[0]?.name} to ${exp.splits?.[0]?.name}` : exp.description}
+                          </div>
                           <div className="expense-meta">
-                            Paid by {exp.payers?.map((p) => p.name).join(', ')} ·{' '}
+                            {exp.isSettlement ? 'Recorded on ' : `Paid by ${exp.payers?.map((p) => p.name).join(', ')} · `}
                             {formatDate(exp.createdAt)}
                           </div>
-                          <div className="expense-meta" style={{ marginTop: 2 }}>
-                            Split among:{' '}
-                            {exp.splits?.map((s) => `${s.name} (${formatINR(s.amount)})`).join(', ')}
-                          </div>
+                          {!exp.isSettlement && (
+                            <div className="expense-meta" style={{ marginTop: 2 }}>
+                              Split among:{' '}
+                              {exp.splits?.map((s) => `${s.name} (${formatINR(s.amount)})`).join(', ')}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                          <div className="expense-amount">{formatINR(exp.totalAmount)}</div>
+                          <div className={`expense-amount ${exp.isSettlement ? 'positive' : ''}`}>{formatINR(exp.totalAmount)}</div>
                           <div className="expense-actions">
-                            <button
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => setEditExpense(exp)}
-                              id={`btn-edit-expense-${exp.id}`}
-                            >
-                              ✏️
-                            </button>
+                            {!exp.isSettlement && (
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => setEditExpense(exp)}
+                                id={`btn-edit-expense-${exp.id}`}
+                              >
+                                ✏️
+                              </button>
+                            )}
                             <button
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDeleteExpense(exp.id)}
@@ -222,11 +241,20 @@ export default function GroupPage({ params }) {
                     <div className="section-title mb-3">🔄 Settlements</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {settlements.map((s, i) => (
-                        <div key={i} className="settlement-item">
-                          <span style={{ fontWeight: 600 }}>{s.from}</span>
-                          <span className="settlement-arrow">→</span>
-                          <span style={{ fontWeight: 600 }}>{s.to}</span>
-                          <span className="settlement-amount">{formatINR(s.amount)}</span>
+                        <div key={i} className="settlement-item" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 600 }}>{s.from}</span>
+                            <span className="settlement-arrow">→</span>
+                            <span style={{ fontWeight: 600 }}>{s.to}</span>
+                            <span className="settlement-amount" style={{ marginLeft: 'auto' }}>{formatINR(s.amount)}</span>
+                          </div>
+                          <button 
+                            className="btn btn-primary btn-sm"
+                            onClick={() => setRecordingSettlement(s)}
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
+                          >
+                            Record Payment
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -300,6 +328,14 @@ export default function GroupPage({ params }) {
           message="Are you sure you want to delete this expense? This cannot be undone."
           onConfirm={executeDeleteExpense}
           onCancel={() => setConfirmDeleteExpense(null)}
+        />
+      )}
+
+      {recordingSettlement && (
+        <RecordSettlementModal
+          initialData={recordingSettlement}
+          onClose={() => setRecordingSettlement(null)}
+          onSaved={handleAddExpense}
         />
       )}
     </div>

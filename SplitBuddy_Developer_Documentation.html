@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SplitBuddy - Technical Architecture & Developer Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #fcfcfc;
+        }
+        h1 {
+            color: #7c3aed;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #4b5563;
+            margin-top: 40px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #1f2937;
+            margin-top: 25px;
+        }
+        .meta-box {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #7c3aed;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .tech-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .tech-name {
+            font-weight: bold;
+            color: #7c3aed;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .screenshot {
+            margin: 30px 0;
+            text-align: center;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .screenshot img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .caption {
+            margin-top: 10px;
+            font-style: italic;
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SplitBuddy - Technical Architecture</h1>
+    
+    <div class="meta-box">
+        <strong>Project Overview:</strong> SplitBuddy is a full-stack, responsive web application designed for friends, roommates, and travel groups to effortlessly track shared expenses and visualize outstanding balances.
+    </div>
+
+    <h2>1. Development Workflow</h2>
+    <p>The development lifecycle prioritized rapid iteration and a "mobile-first" approach. The workflow consisted of the following phases:</p>
+    <ul>
+        <li><strong>Scaffolding & UI Foundations:</strong> Initializing Next.js App Router and building a highly robust vanilla CSS system with modern variables, gradients, and dynamic hover states—avoiding heavy CSS frameworks for performance.</li>
+        <li><strong>Database Modeling:</strong> Structuring the NoSQL Firebase models to efficiently connect Users, Groups, and Expenses without expensive deep-nested querying.</li>
+        <li><strong>Authentication Flow Checkpoints:</strong> Using Firebase Auth context providers to gate routes. Unauthenticated users are redirected to login, and successful logins bounce to the Dashboard.</li>
+        <li><strong>Algorithmic Execution:</strong> Implementing a greedy algorithm locally in the browser to calculate optimal "who owes who" settlements (reducing 5 complex intermingled debts down to 2 simple transactions).</li>
+        <li><strong>Optimization & Deployment:</strong> Removing excess dev dependencies, tuning responsive breakpoints for mobile in-app browsers, configuring Google Cloud API constraints, and deploying frictionlessly via Vercel GitHub integration.</li>
+    </ul>
+
+    <h2>2. Technology Stack</h2>
+    
+    <div class="tech-grid">
+        
+        <div class="tech-card">
+            <div class="tech-name">Frontend Codebase: Next.js (React) + App Router</div>
+            <p><strong>How it's used:</strong> Powers the entire SPA architecture. It maps physical folders (`/dashboard`, `/groups/[groupId]`) directly into accessible URL routes seamlessly.</p>
+            <p><strong>Why it was chosen:</strong> Next.js inherently provides route-based code-splitting, instantaneous fast-refreshes during development, and produces a highly optimized static/dynamic hybrid production build. By rendering the application effectively as a client-side app wrapper, we allow Firebase to handle live states rapidly.</p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-name">Styling: Pure Modern CSS (Vanilla)</div>
+            <p><strong>How it's used:</strong> <code>globals.css</code> handles extensive cascading variables for a dark-mode glassmorphism aesthetic.</p>
+            <p><strong>Why it was chosen:</strong> Avoiding UI frameworks like Tailwind or Material UI kept the bundle size micro-sized and prevented vendor lock-in. It grants absolute granular control over complex flexbox alignments and CSS grid structures without wrestling with pre-compiled classes.</p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-name">Database: Firebase Firestore (NoSQL)</div>
+            <p><strong>How it's used:</strong> Three top-level collections: <code>users</code>, <code>groups</code>, and <code>expenses</code>. Groups maintain an array of <code>memberUids</code> to allow broad queries like "Fetch all groups where I am a member".</p>
+            <p><strong>Why it was chosen:</strong> Firestore offers blazing fast, persistent local caches. Additionally, its query capacity enables us to rely strictly on client-side security rules rather than writing and maintaining expensive custom backend server logic.</p>
+        </div>
+
+        <div class="tech-card">
+            <div class="tech-name">Authentication & APIs: Google Identity Toolkit (Firebase Auth)</div>
+            <p><strong>How it's used:</strong> Handles Google OAuth Popups as well as Anonymous Guest Sessions. The context provider wraps the application shell to inject the user state universally.</p>
+            <p><strong>Why it was chosen:</strong> Writing secure authentication from scratch (hashing passwords, issuing JWTs, handling OAuth handshakes) is technically expensive and prone to security flaws. Firebase provides military-grade identity verification completely out-of-the-box.</p>
+        </div>
+
+    </div>
+
+    <h2>3. Application Testing Visuals</h2>
+    <p>Below are visuals acquired during QA testing the workflows.</p>
+
+    <div class="screenshot">
+        <img src="C:/Users/celex/.gemini/antigravity/brain/bd0fa10f-b2a4-488f-8cc9-22db2ef9d455/login_page_1775745571982.png" alt="Login Page">
+        <div class="caption">Fig 1. Multi-factor Authentication Portal (Google OAuth & Anonymous usage).</div>
+    </div>
+
+    <div class="screenshot">
+        <img src="C:/Users/celex/.gemini/antigravity/brain/bd0fa10f-b2a4-488f-8cc9-22db2ef9d455/dashboard_with_group_1775745737662.png" alt="Dashboard Hub">
+        <div class="caption">Fig 2. The main Dashboard hub displaying active groups queried dynamically from Firestore via `memberUids`.</div>
+    </div>
+
+    <div class="screenshot">
+        <img src="C:/Users/celex/.gemini/antigravity/brain/bd0fa10f-b2a4-488f-8cc9-22db2ef9d455/group_detail_page_1775745632001.png" alt="Expense Split Processing">
+        <div class="caption">Fig 3. Core feature: Granular expense creation showing optimal mathematical settlements mapped out (Who owes Who).</div>
+    </div>
+
+    <script>
+        // Trigger auto-print dialogue immediately upon opening if desired
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

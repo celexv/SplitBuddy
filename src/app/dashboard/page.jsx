@@ -7,6 +7,8 @@ import Navbar from '@/components/Navbar';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import { getUserGroups, deleteGroup } from '@/lib/groups';
+import { getGroupExpenses } from '@/lib/expenses';
+import { calculateBalances, getSettlements } from '@/lib/balances';
 
 export default function DashboardPage() {
   const { currentUser } = useAuth();
@@ -29,7 +31,22 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const g = await getUserGroups(currentUser.uid);
-      setGroups(g);
+      
+      const groupsWithStatus = await Promise.all(
+        g.map(async (group) => {
+          const exps = await getGroupExpenses(group.id);
+          const bals = calculateBalances(group.members || [], exps);
+          const setts = getSettlements(bals);
+          
+          return {
+            ...group,
+            hasExpenses: exps.length > 0,
+            hasPendingSettlements: setts.length > 0
+          };
+        })
+      );
+
+      setGroups(groupsWithStatus);
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,29 +117,47 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="groups-grid">
-            {groups.map((group) => (
-              <div
-                key={group.id}
-                className="group-card"
-                onClick={() => router.push(`/groups/${group.id}`)}
-                id={`group-card-${group.id}`}
-              >
-                <div className="group-card-name">{group.name}</div>
-                <div className="group-card-members">
-                  {group.members?.length || 0} member{group.members?.length !== 1 ? 's' : ''}
-                </div>
-                <div className="group-card-footer">
-                  <div className="member-avatars">
-                    {(group.members || []).slice(0, 5).map((m, i) => (
-                      <div
-                        key={m.id || i}
-                        className="member-avatar-sm"
-                        title={m.name}
-                        style={{ zIndex: 5 - i }}
-                      >
-                        {m.name?.slice(0, 1).toUpperCase()}
-                      </div>
-                    ))}
+            {groups.map((group) => {
+              // Determine styles based on settlement status
+              let cardClass = "group-card";
+              let badgeStatus = null;
+              
+              if (group.hasExpenses) {
+                if (group.hasPendingSettlements) {
+                  cardClass += " group-card-pending";
+                  badgeStatus = <span className="badge badge-danger">⏳ Pending Settlements</span>;
+                } else {
+                  cardClass += " group-card-settled";
+                  badgeStatus = <span className="badge badge-success">✅ Settled</span>;
+                }
+              }
+
+              return (
+                <div
+                  key={group.id}
+                  className={cardClass}
+                  onClick={() => router.push(`/groups/${group.id}`)}
+                  id={`group-card-${group.id}`}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div className="group-card-name">{group.name}</div>
+                    {badgeStatus}
+                  </div>
+                  <div className="group-card-members">
+                    {group.members?.length || 0} member{group.members?.length !== 1 ? 's' : ''}
+                  </div>
+                  <div className="group-card-footer">
+                    <div className="member-avatars">
+                      {(group.members || []).slice(0, 5).map((m, i) => (
+                        <div
+                          key={m.id || i}
+                          className="member-avatar-sm"
+                          title={m.name}
+                          style={{ zIndex: 5 - i }}
+                        >
+                          {m.name?.slice(0, 1).toUpperCase()}
+                        </div>
+                      ))}
                     {(group.members?.length || 0) > 5 && (
                       <div className="member-avatar-sm" style={{ background: 'var(--bg-card)', color: 'var(--text-muted)', border: '2px solid var(--border)' }}>
                         +{group.members.length - 5}
@@ -139,8 +174,9 @@ export default function DashboardPage() {
                     {deletingId === group.id ? <span className="spinner" /> : '🗑️'}
                   </button>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
