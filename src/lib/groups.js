@@ -63,3 +63,9 @@ export async function searchUsersByEmail(email) {
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
+
+export async function updateGroupName(groupId, newName) {
+  const ref = doc(db, 'groups', groupId);
+  await updateDoc(ref, { name: newName });
+}
+

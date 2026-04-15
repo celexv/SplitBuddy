@@ -8,7 +8,7 @@ import Navbar from '@/components/Navbar';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import RecordSettlementModal from '@/components/RecordSettlementModal';
-import { getGroup } from '@/lib/groups';
+import { getGroup, updateGroupName } from '@/lib/groups';
 import { getGroupExpenses, addExpense, updateExpense, deleteExpense } from '@/lib/expenses';
 import { calculateBalances, getSettlements, formatINR } from '@/lib/balances';
 import { generateGroupReport } from '@/lib/pdfReport';
@@ -28,7 +28,10 @@ export default function GroupPage({ params }) {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteExpense, setConfirmDeleteExpense] = useState(null);
   const [recordingSettlement, setRecordingSettlement] = useState(null);
-
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [settlingGroup, setSettlingGroup] = useState(false);
   useEffect(() => {
     if (!currentUser) { router.push('/login'); return; }
     loadData();
@@ -51,9 +54,51 @@ export default function GroupPage({ params }) {
     }
   }
 
+  async function handleSaveName() {
+    if (!editNameValue.trim() || editNameValue.trim() === group.name) {
+      setIsEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    try {
+      await updateGroupName(groupId, editNameValue.trim());
+      setGroup(prev => ({ ...prev, name: editNameValue.trim() }));
+      setIsEditingName(false);
+    } catch (err) {
+      console.error('Failed to update group name:', err);
+    } finally {
+      setSavingName(false);
+    }
+  }
+
   async function handleAddExpense(payload) {
     await addExpense(groupId, payload, currentUser.uid);
     await loadData();
+  }
+
+  async function handleSettleUpGroup() {
+    if (!window.confirm(`Are you sure you want to automatically record ${settlements.length} payments to settle all debts?`)) return;
+    setSettlingGroup(true);
+    try {
+      for (const s of settlements) {
+        const payload = {
+          description: 'Payment',
+          isSettlement: true,
+          totalAmount: s.amount,
+          payers: [{ memberId: s.fromId, name: s.from, amount: s.amount }],
+          splits: [{ memberId: s.toId, name: s.to, amount: s.amount }],
+          payerMode: 'single',
+          splitMode: 'exact',
+        };
+        await addExpense(groupId, payload, currentUser.uid);
+      }
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to settle up group');
+    } finally {
+      setSettlingGroup(false);
+    }
   }
 
   async function handleEditExpense(payload) {
@@ -114,7 +159,51 @@ export default function GroupPage({ params }) {
                 ← My Groups
               </Link>
               <div className="group-title-row">
-                <h1 className="group-title">{group.name}</h1>
+                {isEditingName ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={editNameValue} 
+                      onChange={e => setEditNameValue(e.target.value)}
+                      style={{ fontSize: '1.2rem', padding: '6px 10px', width: '250px', height: '42px' }}
+                      autoFocus
+                      disabled={savingName}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveName();
+                        if (e.key === 'Escape') setIsEditingName(false);
+                      }}
+                    />
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      onClick={handleSaveName}
+                      disabled={savingName}
+                      style={{ height: '42px' }}
+                    >
+                      {savingName ? <span className="spinner" style={{ width: 14, height: 14 }} /> : 'Save'}
+                    </button>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={() => setIsEditingName(false)}
+                      disabled={savingName}
+                      style={{ height: '42px' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h1 className="group-title" style={{ margin: 0 }}>{group.name}</h1>
+                    <button 
+                      className="btn btn-ghost btn-icon" 
+                      onClick={() => { setEditNameValue(group.name); setIsEditingName(true); }}
+                      style={{ padding: '6px', fontSize: '1rem', color: 'var(--text-muted)' }}
+                      title="Edit group name"
+                    >
+                      ✏️
+                    </button>
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
                     className="btn btn-secondary"
@@ -258,9 +347,20 @@ export default function GroupPage({ params }) {
                         </div>
                       ))}
                     </div>
-                    <p className="text-sm text-muted mt-3">
-                      Minimum transactions needed to settle all debts
-                    </p>
+
+                    <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                      <p className="text-sm text-muted">
+                        Minimum transactions needed to settle all debts
+                      </p>
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={handleSettleUpGroup}
+                        disabled={settlingGroup}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                         {settlingGroup ? <span className="spinner" style={{ width: 14, height: 14 }} /> : '✨ Settle Up All'}
+                      </button>
+                    </div>
                   </div>
                 )}
 

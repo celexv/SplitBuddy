@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LoginPage() {
   const { signInWithEmail, signUpWithEmail, signInWithGoogle, signInAnonymously } = useAuth();
@@ -86,6 +87,9 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
+      <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+        <ThemeToggle />
+      </div>
       <div className="login-bg-orb login-bg-orb-1" />
       <div className="login-bg-orb login-bg-orb-2" />
 

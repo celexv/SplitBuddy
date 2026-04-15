@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Navbar() {
   const { currentUser, signOut } = useAuth();
@@ -26,6 +27,7 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-actions">
+          <ThemeToggle />
           <div className="user-pill">
             <div className="user-avatar">
               {currentUser?.photoURL ? (
