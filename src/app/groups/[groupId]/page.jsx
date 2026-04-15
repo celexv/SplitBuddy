@@ -302,7 +302,7 @@ export default function GroupPage({ params }) {
                             <div className="member-name-badge" style={{ width: 30, height: 30, fontSize: '0.72rem' }}>
                               {b.name.slice(0, 1).toUpperCase()}
                             </div>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{b.name}</span>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>{b.name}</span>
                           </div>
                           <span
                             className={`balance-amount ${b.net > 0.01 ? 'positive' : b.net < -0.01 ? 'negative' : 'zero'}`}
@@ -382,7 +382,7 @@ export default function GroupPage({ params }) {
                           {m.name.slice(0, 1).toUpperCase()}
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{m.name}</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{m.name}</div>
                           {m.email && (
                             <div className="text-sm text-muted">{m.email}</div>
                           )}

@@ -60,6 +60,7 @@ body {
   min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* ===== LAYOUT ===== */
@@ -67,6 +68,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .page-content {
@@ -75,6 +77,12 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   width: 100%;
+}
+
+@media (max-width: 600px) {
+  .page-content {
+    padding: 1.5rem 0.75rem;
+  }
 }
 
 /* ===== NAVBAR ===== */
@@ -594,6 +602,15 @@ body {
   align-items: flex-start;
   gap: 1rem;
   transition: all var(--transition);
+  position: relative;
+}
+
+@media (max-width: 600px) {
+  .expense-item {
+    flex-wrap: wrap;
+    padding: 1rem;
+    gap: 0.75rem;
+  }
 }
 
 .expense-item:hover {
@@ -627,14 +644,27 @@ body {
   font-size: 0.95rem;
   color: var(--text-primary);
   margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+@media (max-width: 600px) {
+  .expense-desc {
+    white-space: normal;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
 }
 
 .expense-meta {
   font-size: 0.8rem;
   color: var(--text-muted);
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 600px) {
+  .expense-meta {
+    font-size: 0.75rem;
+  }
 }
 
 .expense-amount {
@@ -642,6 +672,12 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .expense-amount {
+    font-size: 1rem;
+  }
 }
 
 .expense-actions {
@@ -704,6 +740,14 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   font-size: 0.88rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .settlement-item {
+    gap: 8px;
+    padding: 12px;
+  }
 }
 
 .settlement-arrow {
@@ -1034,25 +1078,39 @@ body {
   flex-wrap: wrap;
 }
 
+@media (max-width: 600px) {
+  .group-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+}
+
 .group-title {
   font-size: 1.8rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
+@media (max-width: 600px) {
+  .group-title {
+    font-size: 1.5rem;
+  }
+}
+
 .group-page-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 1.5rem;
   align-items: start;
 }
 
 @media (max-width: 768px) {
   .group-page-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .groups-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
