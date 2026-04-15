@@ -38,7 +38,7 @@ export default function Navbar() {
             </div>
             <span className="user-name-text" title={displayName}>{firstName}</span>
             {currentUser?.isAnonymous && (
-              <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>(Guest)</span>
+              <span className="guest-tag" style={{ fontSize: '0.72rem', opacity: 0.7 }}>(Guest)</span>
             )}
           </div>
           <button className="btn btn-ghost btn-sm" onClick={handleSignOut} id="btn-signout">

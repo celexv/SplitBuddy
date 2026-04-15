@@ -8,6 +8,7 @@
   --bg-card-hover: rgba(255, 255, 255, 0.07);
   --bg-input: rgba(255, 255, 255, 0.06);
   --bg-modal: #12121e;
+  --bg-navbar: rgba(10, 10, 15, 0.85);
 
   --accent: #7c3aed;
   --accent-light: #9f67f7;
@@ -78,7 +79,7 @@ body {
 
 /* ===== NAVBAR ===== */
 .navbar {
-  background: rgba(10, 10, 15, 0.85);
+  background: var(--bg-navbar);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -1230,13 +1231,31 @@ body {
 
 @media (max-width: 600px) {
   .navbar {
-    padding: 0 1rem;
-  }
-  .user-name-text {
-    max-width: 80px; /* Only strictly truncate on very small screens */
+    padding: 0 0.5rem;
   }
   .navbar-logo {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    gap: 6px;
+  }
+  .navbar-actions {
+    gap: 0.5rem;
+  }
+  .user-name-text {
+    display: none;
+  }
+  .guest-tag {
+    display: none;
+  }
+  .user-pill {
+    padding: 4px;
+    gap: 0;
+  }
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  .theme-toggle {
+    margin-left: 0;
   }
 }
 
@@ -1248,6 +1267,7 @@ body {
   --bg-card-hover: #f1f5f9;
   --bg-input: #f8fafc;
   --bg-modal: #f8fafc;
+  --bg-navbar: rgba(248, 250, 252, 0.85);
 
   --accent: #6d28d9;
   --accent-light: #8b5cf6;
